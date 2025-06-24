@@ -1,10 +1,15 @@
 import OpenAI from 'openai';
 
-// Initialize OpenAI client
-const openai = new OpenAI({
-  apiKey: import.meta.env.VITE_OPENAI_API_KEY,
-  dangerouslyAllowBrowser: true // Only for development
-});
+// Initialize OpenAI client only when needed
+const getOpenAIClient = () => {
+  if (!import.meta.env.VITE_OPENAI_API_KEY) {
+    throw new Error('OpenAI API key not configured');
+  }
+  return new OpenAI({
+    apiKey: import.meta.env.VITE_OPENAI_API_KEY,
+    dangerouslyAllowBrowser: true // Only for development
+  });
+};
 
 // Types for AI responses
 export interface CategorySuggestion {
@@ -71,7 +76,7 @@ export const suggestCategory = async (productName: string, description?: string)
       }
     `;
 
-    const completion = await openai.chat.completions.create({
+    const completion = await getOpenAIClient().chat.completions.create({
       model: 'gpt-3.5-turbo',
       messages: [{ role: 'user', content: prompt }],
       temperature: 0.3,
@@ -116,7 +121,7 @@ export const generateDescription = async (productName: string, category: string,
       }
     `;
 
-    const completion = await openai.chat.completions.create({
+    const completion = await getOpenAIClient().chat.completions.create({
       model: 'gpt-3.5-turbo',
       messages: [{ role: 'user', content: prompt }],
       temperature: 0.7,
@@ -163,7 +168,7 @@ export const suggestPricing = async (productName: string, category: string, desc
       }
     `;
 
-    const completion = await openai.chat.completions.create({
+    const completion = await getOpenAIClient().chat.completions.create({
       model: 'gpt-3.5-turbo',
       messages: [{ role: 'user', content: prompt }],
       temperature: 0.3,
@@ -205,7 +210,7 @@ export const analyzeImage = async (imageUrl: string, productName: string): Promi
       }
     `;
 
-    const completion = await openai.chat.completions.create({
+    const completion = await getOpenAIClient().chat.completions.create({
       model: 'gpt-4-vision-preview',
       messages: [
         {
@@ -285,7 +290,7 @@ export const validateProductWithAI = async (productData: {
       }
     `;
 
-    const completion = await openai.chat.completions.create({
+    const completion = await getOpenAIClient().chat.completions.create({
       model: 'gpt-3.5-turbo',
       messages: [{ role: 'user', content: prompt }],
       temperature: 0.3,
