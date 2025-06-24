@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+// Removed Tabs import as we no longer distinguish between buyer/seller
 import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Link, useNavigate } from 'react-router-dom';
@@ -13,15 +13,12 @@ import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 
 const Register = () => {
-  const [userType, setUserType] = useState<'buyer' | 'seller'>('buyer');
+  // Removed userType state as all users can both buy and sell
   const [formData, setFormData] = useState({
     email: '',
     password: '',
     confirmPassword: '',
     fullName: '',
-    businessName: '',
-    whatsappNumber: '',
-    businessLocation: '',
     agreeToTerms: false
   });
   const [showPassword, setShowPassword] = useState(false);
@@ -79,13 +76,7 @@ const Register = () => {
     
     try {
       const userData = {
-        full_name: formData.fullName,
-        role: userType,
-        ...(userType === 'seller' && {
-          business_name: formData.businessName,
-          whatsapp_number: formData.whatsappNumber,
-          business_location: formData.businessLocation
-        })
+        full_name: formData.fullName
       };
 
       const { error } = await signUpWithEmail(formData.email, formData.password, userData);
@@ -166,19 +157,7 @@ const Register = () => {
               </div>
             </div>
 
-            <Tabs value={userType} onValueChange={(value) => setUserType(value as 'buyer' | 'seller')}>
-              <TabsList className="grid w-full grid-cols-2 mb-6">
-                <TabsTrigger value="buyer" className="flex items-center gap-2">
-                  <User className="w-4 h-4" />
-                  Pembeli
-                </TabsTrigger>
-                <TabsTrigger value="seller" className="flex items-center gap-2">
-                  <Store className="w-4 h-4" />
-                  Penjual (UMKM)
-                </TabsTrigger>
-              </TabsList>
-
-              <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-4">
                 {/* Common Fields */}
                 <div className="space-y-2">
                   <Label htmlFor="email">Email</Label>
@@ -251,86 +230,18 @@ const Register = () => {
                   </div>
                 </div>
 
-                <TabsContent value="buyer" className="space-y-4 mt-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="fullName">Nama Lengkap</Label>
-                    <Input
-                      id="fullName"
-                      type="text"
-                      placeholder="Masukkan nama lengkap"
-                      value={formData.fullName}
-                      onChange={(e) => handleInputChange('fullName', e.target.value)}
-                      required
-                      className="h-11"
-                    />
-                  </div>
-                </TabsContent>
-
-                <TabsContent value="seller" className="space-y-4 mt-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="fullName">Nama Lengkap</Label>
-                    <Input
-                      id="fullName"
-                      type="text"
-                      placeholder="Masukkan nama lengkap"
-                      value={formData.fullName}
-                      onChange={(e) => handleInputChange('fullName', e.target.value)}
-                      required
-                      className="h-11"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="businessName">Nama Usaha/Toko</Label>
-                    <Input
-                      id="businessName"
-                      type="text"
-                      placeholder="Masukkan nama usaha atau toko"
-                      value={formData.businessName}
-                      onChange={(e) => handleInputChange('businessName', e.target.value)}
-                      required
-                      className="h-11"
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="whatsappNumber">Nomor WhatsApp</Label>
-                      <Input
-                        id="whatsappNumber"
-                        type="tel"
-                        placeholder="08xxxxxxxxxx"
-                        value={formData.whatsappNumber}
-                        onChange={(e) => handleInputChange('whatsappNumber', e.target.value)}
-                        required
-                        className="h-11"
-                      />
-                      <p className="text-xs text-gray-500">
-                        Nomor ini akan digunakan pembeli untuk menghubungi Anda
-                      </p>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="businessLocation">Lokasi Usaha</Label>
-                      <Select 
-                        value={formData.businessLocation} 
-                        onValueChange={(value) => handleInputChange('businessLocation', value)}
-                        required
-                      >
-                        <SelectTrigger className="h-11">
-                          <SelectValue placeholder="Pilih lokasi usaha" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {bekasikAreas.map((area) => (
-                            <SelectItem key={area} value={area}>
-                              {area}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-                </TabsContent>
+                <div className="space-y-2">
+                  <Label htmlFor="fullName">Nama Lengkap</Label>
+                  <Input
+                    id="fullName"
+                    type="text"
+                    placeholder="Masukkan nama lengkap"
+                    value={formData.fullName}
+                    onChange={(e) => handleInputChange('fullName', e.target.value)}
+                    required
+                    className="h-11"
+                  />
+                </div>
 
                 <div className="flex items-center space-x-2 pt-4">
                   <Checkbox
@@ -358,8 +269,7 @@ const Register = () => {
                 >
                   {isLoading ? 'Sedang mendaftar...' : 'Daftar Sekarang'}
                 </Button>
-              </form>
-            </Tabs>
+            </form>
 
             <div className="mt-6 text-center">
               <p className="text-gray-600">

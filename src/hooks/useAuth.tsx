@@ -1,7 +1,16 @@
 
 import { createContext, useContext, useEffect, useState } from 'react';
-import { User, Session } from '@supabase/supabase-js';
+import { User as SupabaseUser, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
+import { Tables } from '@/integrations/supabase/types';
+
+// Extended User type that includes database user properties
+type User = SupabaseUser & {
+  name?: string;
+  avatar_url?: string | null;
+  phone?: string | null;
+  location?: string | null;
+};
 
 interface AuthContextType {
   user: User | null;
@@ -11,6 +20,7 @@ interface AuthContextType {
   signInWithGoogle: () => Promise<void>;
   signInWithEmail: (email: string, password: string) => Promise<{ error: any }>;
   signUpWithEmail: (email: string, password: string, userData?: any) => Promise<{ error: any }>;
+  fetchUserProfile: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -20,29 +30,118 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // Function to fetch user profile and merge with auth user
+  const fetchUserProfile = async (authUser: SupabaseUser): Promise<User> => {
+    try {
+      const { data: profile } = await supabase
+        .from('users')
+        .select('name, avatar_url, phone, location')
+        .eq('id', authUser.id)
+        .single();
+
+      return {
+        ...authUser,
+        name: profile?.name,
+        avatar_url: profile?.avatar_url,
+        phone: profile?.phone,
+        location: profile?.location,
+      };
+    } catch (error) {
+      console.error('Error fetching user profile:', error);
+      return authUser;
+    }
+  };
+
   useEffect(() => {
+    let mounted = true;
+    let initialized = false;
+    
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
+      async (event, session) => {
+        console.log('Auth state change:', event, session?.user?.email);
+        
+        if (!mounted) return;
+        
         setSession(session);
-        setUser(session?.user ?? null);
+        
+        if (session?.user) {
+          const userWithProfile = await fetchUserProfile(session.user);
+          if (mounted) {
+            setUser(userWithProfile);
+          }
+        } else {
+          if (mounted) {
+            setUser(null);
+          }
+        }
         
         if (event === 'SIGNED_IN') {
           console.log('User signed in:', session?.user?.email);
         }
         
-        setLoading(false);
+        // Set loading to false after processing auth state change
+        if (mounted) {
+          initialized = true;
+          setLoading(false);
+        }
       }
     );
 
     // Check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      setLoading(false);
-    });
+    const initAuth = async () => {
+      try {
+        console.log('Checking existing session...');
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          console.error('Error getting session:', error);
+          if (mounted) {
+            initialized = true;
+            setLoading(false);
+          }
+          return;
+        }
+        
+        console.log('Existing session:', session?.user?.email || 'No session');
+        
+        if (!mounted) return;
+        
+        // If we have a session, the onAuthStateChange will handle it
+        // If no session, we can set loading to false immediately
+        if (!session) {
+          setSession(null);
+          setUser(null);
+          initialized = true;
+          setLoading(false);
+        }
+        // If there is a session, let onAuthStateChange handle it
+        
+      } catch (error) {
+        console.error('Error initializing auth:', error);
+        if (mounted) {
+          initialized = true;
+          setLoading(false);
+        }
+      }
+    };
 
-    return () => subscription.unsubscribe();
+    initAuth();
+    
+    // Fallback timeout to prevent infinite loading
+    const timeout = setTimeout(() => {
+      if (mounted && !initialized) {
+        console.warn('Auth initialization timeout, setting loading to false');
+        initialized = true;
+        setLoading(false);
+      }
+    }, 5000); // Increased timeout to 5 seconds
+
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+      clearTimeout(timeout);
+    };
   }, []);
 
   const signOut = async () => {
@@ -56,7 +155,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${window.location.origin}/`
+        redirectTo: `${window.location.origin}/auth/callback`
       }
     });
     
@@ -80,12 +179,20 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       email,
       password,
       options: {
-        emailRedirectTo: `${window.location.origin}/`,
+        emailRedirectTo: `${window.location.origin}/auth/callback`,
         data: userData
       }
     });
     
     return { error };
+  };
+
+  // Public function to refresh user profile
+  const refreshUserProfile = async () => {
+    if (session?.user) {
+      const userWithProfile = await fetchUserProfile(session.user);
+      setUser(userWithProfile);
+    }
   };
 
   return (
@@ -96,7 +203,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       signOut,
       signInWithGoogle,
       signInWithEmail,
-      signUpWithEmail
+      signUpWithEmail,
+      fetchUserProfile: refreshUserProfile
     }}>
       {children}
     </AuthContext.Provider>

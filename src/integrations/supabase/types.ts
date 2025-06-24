@@ -3,358 +3,97 @@ export type Json =
   | number
   | boolean
   | null
-  | { [key: string]: Json | undefined }
-  | Json[]
+  | { [key: string]: any }
+  | any[]
 
 export type Database = {
   public: {
     Tables: {
-      categories: {
+      business_verification: {
         Row: {
-          created_at: string | null
-          description: string | null
-          icon: string | null
-          id: string
-          name: string
+          id: string;
+          user_id?: string | null;
+          ktp_number: string;
+          ktp_image_url: string;
+          business_photo_url: string;
+          business_name: string;
+          business_type?: string | null;
+          business_description?: string | null;
+          business_address?: string | null;
+          verification_status?: 'pending' | 'approved' | 'rejected' | null;
+          verified_at?: string | null; // ISO 8601 format
+          rejected_reason?: string | null;
+          submitted_at?: string | null; // ISO 8601 format
+          updated_at?: string | null; // ISO 8601 format
+          business_image_url?: string | null;
         }
         Insert: {
-          created_at?: string | null
-          description?: string | null
-          icon?: string | null
-          id?: string
-          name: string
+          user_id?: string | null;
+          ktp_number: string;
+          ktp_image_url: string;
+          business_photo_url: string;
+          business_name: string;
+          business_type?: string | null;
+          business_description?: string | null;
+          business_address?: string | null;
+          verification_status?: 'pending' | 'approved' | 'rejected' | null;
+          verified_at?: string | null; // ISO 8601 format
+          rejected_reason?: string | null;
+          submitted_at?: string | null; // ISO 8601 format
+          updated_at?: string | null; // ISO 8601 format
+          business_image_url?: string | null;
         }
         Update: {
-          created_at?: string | null
-          description?: string | null
-          icon?: string | null
-          id?: string
-          name?: string
+          user_id?: string | null;
+          ktp_number?: string;
+          ktp_image_url?: string;
+          business_photo_url?: string;
+          business_name?: string;
+          business_type?: string | null;
+          business_description?: string | null;
+          business_address?: string | null;
+          verification_status?: 'pending' | 'approved' | 'rejected' | null;
+          verified_at?: string | null; // ISO 8601 format
+          rejected_reason?: string | null;
+          submitted_at?: string | null; // ISO 8601 format
+          updated_at?: string | null; // ISO 8601 format
+          business_image_url?: string | null;
         }
         Relationships: []
-      }
-      chats: {
+      },
+      categories: {
         Row: {
-          buyer_id: string | null
-          buyer_unread_count: number | null
-          created_at: string | null
-          id: string
-          last_message: string | null
-          last_message_at: string | null
-          product_id: string | null
-          seller_id: string | null
-          seller_unread_count: number | null
-          updated_at: string | null
+          id: string;
+          name: string;
+          description?: string | null;
+          icon?: string | null;
+          created_at?: string | null; // ISO 8601 format
         }
         Insert: {
-          buyer_id?: string | null
-          buyer_unread_count?: number | null
-          created_at?: string | null
-          id?: string
-          last_message?: string | null
-          last_message_at?: string | null
-          product_id?: string | null
-          seller_id?: string | null
-          seller_unread_count?: number | null
-          updated_at?: string | null
+          name: string;
+          description?: string | null;
+          icon?: string | null;
+          created_at?: string | null; // ISO 8601 format
         }
         Update: {
-          buyer_id?: string | null
-          buyer_unread_count?: number | null
-          created_at?: string | null
-          id?: string
-          last_message?: string | null
-          last_message_at?: string | null
-          product_id?: string | null
-          seller_id?: string | null
-          seller_unread_count?: number | null
-          updated_at?: string | null
+          name?: string;
+          description?: string | null;
+          icon?: string | null;
+          created_at?: string | null; // ISO 8601 format
         }
-        Relationships: [
-          {
-            foreignKeyName: "chats_buyer_id_fkey"
-            columns: ["buyer_id"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "chats_product_id_fkey"
-            columns: ["product_id"]
-            isOneToOne: false
-            referencedRelation: "products"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "chats_seller_id_fkey"
-            columns: ["seller_id"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      messages: {
-        Row: {
-          chat_id: string | null
-          content: string
-          created_at: string | null
-          id: string
-          is_read: boolean | null
-          message_type: string | null
-          sender_id: string | null
-        }
-        Insert: {
-          chat_id?: string | null
-          content: string
-          created_at?: string | null
-          id?: string
-          is_read?: boolean | null
-          message_type?: string | null
-          sender_id?: string | null
-        }
-        Update: {
-          chat_id?: string | null
-          content?: string
-          created_at?: string | null
-          id?: string
-          is_read?: boolean | null
-          message_type?: string | null
-          sender_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "messages_chat_id_fkey"
-            columns: ["chat_id"]
-            isOneToOne: false
-            referencedRelation: "chats"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "messages_sender_id_fkey"
-            columns: ["sender_id"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      orders: {
-        Row: {
-          buyer_id: string | null
-          created_at: string | null
-          delivery_address: string
-          delivery_phone: string | null
-          id: string
-          notes: string | null
-          payment_status: string | null
-          product_id: string | null
-          quantity: number
-          seller_id: string | null
-          status: string | null
-          total_amount: number
-          tracking_number: string | null
-          unit_price: number
-          updated_at: string | null
-        }
-        Insert: {
-          buyer_id?: string | null
-          created_at?: string | null
-          delivery_address: string
-          delivery_phone?: string | null
-          id?: string
-          notes?: string | null
-          payment_status?: string | null
-          product_id?: string | null
-          quantity: number
-          seller_id?: string | null
-          status?: string | null
-          total_amount: number
-          tracking_number?: string | null
-          unit_price: number
-          updated_at?: string | null
-        }
-        Update: {
-          buyer_id?: string | null
-          created_at?: string | null
-          delivery_address?: string
-          delivery_phone?: string | null
-          id?: string
-          notes?: string | null
-          payment_status?: string | null
-          product_id?: string | null
-          quantity?: number
-          seller_id?: string | null
-          status?: string | null
-          total_amount?: number
-          tracking_number?: string | null
-          unit_price?: number
-          updated_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "orders_buyer_id_fkey"
-            columns: ["buyer_id"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "orders_product_id_fkey"
-            columns: ["product_id"]
-            isOneToOne: false
-            referencedRelation: "products"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "orders_seller_id_fkey"
-            columns: ["seller_id"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      products: {
-        Row: {
-          category_id: string | null
-          condition: string | null
-          created_at: string | null
-          description: string | null
-          id: string
-          images: string[] | null
-          is_active: boolean | null
-          location: string | null
-          name: string
-          price: number
-          seller_id: string | null
-          stock: number | null
-          tags: string[] | null
-          updated_at: string | null
-          views_count: number | null
-        }
-        Insert: {
-          category_id?: string | null
-          condition?: string | null
-          created_at?: string | null
-          description?: string | null
-          id?: string
-          images?: string[] | null
-          is_active?: boolean | null
-          location?: string | null
-          name: string
-          price: number
-          seller_id?: string | null
-          stock?: number | null
-          tags?: string[] | null
-          updated_at?: string | null
-          views_count?: number | null
-        }
-        Update: {
-          category_id?: string | null
-          condition?: string | null
-          created_at?: string | null
-          description?: string | null
-          id?: string
-          images?: string[] | null
-          is_active?: boolean | null
-          location?: string | null
-          name?: string
-          price?: number
-          seller_id?: string | null
-          stock?: number | null
-          tags?: string[] | null
-          updated_at?: string | null
-          views_count?: number | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "products_category_id_fkey"
-            columns: ["category_id"]
-            isOneToOne: false
-            referencedRelation: "categories"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "products_seller_id_fkey"
-            columns: ["seller_id"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      reviews: {
-        Row: {
-          comment: string | null
-          created_at: string | null
-          id: string
-          images: string[] | null
-          is_verified: boolean | null
-          order_id: string | null
-          product_id: string | null
-          rating: number
-          reviewer_id: string | null
-          updated_at: string | null
-        }
-        Insert: {
-          comment?: string | null
-          created_at?: string | null
-          id?: string
-          images?: string[] | null
-          is_verified?: boolean | null
-          order_id?: string | null
-          product_id?: string | null
-          rating: number
-          reviewer_id?: string | null
-          updated_at?: string | null
-        }
-        Update: {
-          comment?: string | null
-          created_at?: string | null
-          id?: string
-          images?: string[] | null
-          is_verified?: boolean | null
-          order_id?: string | null
-          product_id?: string | null
-          rating?: number
-          reviewer_id?: string | null
-          updated_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "reviews_order_id_fkey"
-            columns: ["order_id"]
-            isOneToOne: false
-            referencedRelation: "orders"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "reviews_product_id_fkey"
-            columns: ["product_id"]
-            isOneToOne: false
-            referencedRelation: "products"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "reviews_reviewer_id_fkey"
-            columns: ["reviewer_id"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      users: {
+        Relationships: []
+      },
+      waitlist: {
         Row: {
           avatar_url: string | null
           created_at: string | null
           email: string
           id: string
+          interest_category: string | null
           location: string | null
-          name: string
+          message: string | null
+          name: string | null
           phone: string | null
-          role: string | null
           updated_at: string | null
         }
         Insert: {
@@ -362,10 +101,11 @@ export type Database = {
           created_at?: string | null
           email: string
           id?: string
+          interest_category?: string | null
           location?: string | null
-          name: string
+          message?: string | null
+          name?: string | null
           phone?: string | null
-          role?: string | null
           updated_at?: string | null
         }
         Update: {
@@ -373,23 +113,493 @@ export type Database = {
           created_at?: string | null
           email?: string
           id?: string
+          interest_category?: string | null
           location?: string | null
-          name?: string
+          message?: string | null
+          name?: string | null
           phone?: string | null
-          role?: string | null
           updated_at?: string | null
         }
         Relationships: []
       }
+    },
+    chatbot_analytics: {
+      Row: {
+        id: string;
+        event_type: 'chatbot_request' | 'chatbot_response' | 'chatbot_error' | 'faq_match' | 'session_start' | 'session_end';
+        user_id?: string | null;
+        session_id?: string | null;
+        message_length?: number | null;
+        response_length?: number | null;
+        confidence?: number | null; // 0.00 to 1.00
+        processing_time?: number | null;
+        source?: 'faq' | 'ai' | 'fallback' | null;
+        has_context?: boolean | null;
+        error_type?: string | null;
+        error_message?: string | null;
+        faq_match_score?: number | null; // 0.00 to 1.00
+        matched_faq_id?: string | null;
+        timestamp?: string | null; // ISO 8601 format
+        metadata?: object | null; // JSON object
+        created_at?: string | null; // ISO 8601 format
+      }
+      Insert: {
+        event_type: 'chatbot_request' | 'chatbot_response' | 'chatbot_error' | 'faq_match' | 'session_start' | 'session_end';
+        user_id?: string | null;
+        session_id?: string | null;
+        message_length?: number | null;
+        response_length?: number | null;
+        confidence?: number | null; // 0.00 to 1.00
+        processing_time?: number | null;
+        source?: 'faq' | 'ai' | 'fallback' | null;
+        has_context?: boolean | null;
+        error_type?: string | null;
+        error_message?: string | null;
+        faq_match_score?: number | null; // 0.00 to 1.00
+        matched_faq_id?: string | null;
+        timestamp?: string | null; // ISO 8601 format
+        metadata?: object | null; // JSON object
+        created_at?: string | null; // ISO 8601 format
+      }
+      Update: {
+        event_type?: 'chatbot_request' | 'chatbot_response' | 'chatbot_error' | 'faq_match' | 'session_start' | 'session_end';
+        user_id?: string | null;
+        session_id?: string | null;
+        message_length?: number | null;
+        response_length?: number | null;
+        confidence?: number | null; // 0.00 to 1.00
+        processing_time?: number | null;
+        source?: 'faq' | 'ai' | 'fallback' | null;
+        has_context?: boolean | null;
+        error_type?: string | null;
+        error_message?: string | null;
+        faq_match_score?: number | null; // 0.00 to 1.00
+        matched_faq_id?: string | null;
+        timestamp?: string | null; // ISO 8601 format
+        metadata?: object | null; // JSON object
+        created_at?: string | null; // ISO 8601 format
+      }
+      Relationships: []
+    },
+    users: {
+      Row: {
+        id: string;
+        email: string;
+        name: string;
+        phone?: string | null;
+        role?: 'buyer' | 'seller' | 'admin' | null;
+        avatar_url?: string | null;
+        location?: string | null;
+        created_at?: string | null; // ISO 8601 format
+        updated_at?: string | null; // ISO 8601 format
+        business_name?: string | null;
+        business_type?: string | null;
+        business_description?: string | null;
+        business_hours?: object | null; // JSON object
+        is_verified?: boolean | null;
+        verification_badge?: string | null;
+      }
+      Insert: {
+        email: string;
+        name: string;
+        phone?: string | null;
+        role?: 'buyer' | 'seller' | 'admin' | null;
+        avatar_url?: string | null;
+        location?: string | null;
+        created_at?: string | null; // ISO 8601 format
+        updated_at?: string | null; // ISO 8601 format
+        business_name?: string | null;
+        business_type?: string | null;
+        business_description?: string | null;
+        business_hours?: object | null; // JSON object
+        is_verified?: boolean | null;
+        verification_badge?: string | null;
+      }
+      Update: {
+        email?: string;
+        name?: string;
+        phone?: string | null;
+        role?: 'buyer' | 'seller' | 'admin' | null;
+        avatar_url?: string | null;
+        location?: string | null;
+        created_at?: string | null; // ISO 8601 format
+        updated_at?: string | null; // ISO 8601 format
+        business_name?: string | null;
+        business_type?: string | null;
+        business_description?: string | null;
+        business_hours?: object | null; // JSON object
+        is_verified?: boolean | null;
+        verification_badge?: string | null;
+      }
+      Relationships: []
+    },
+    chatbot_analytics_summary: {
+      Row: {
+        id: string;
+        total_requests: number;
+        total_responses: number;
+        total_errors: number;
+        total_faq_matches: number;
+        total_sessions: number;
+        average_processing_time: number | null; // in milliseconds
+        created_at?: string | null; // ISO 8601 format
+        updated_at?: string | null; // ISO 8601 format
+      }
+      Insert: {
+        total_requests: number;
+        total_responses: number;
+        total_errors: number;
+        total_faq_matches: number;
+        total_sessions: number;
+        average_processing_time?: number | null; // in milliseconds
+        created_at?: string | null; // ISO 8601 format
+        updated_at?: string | null; // ISO 8601 format
+      }
+      Update: {
+        total_requests?: number;
+        total_responses?: number;
+        total_errors?: number;
+        total_faq_matches?: number;
+        total_sessions?: number;
+        average_processing_time?: number | null; // in milliseconds
+        created_at?: string | null; // ISO 8601 format
+        updated_at?: string | null; // ISO 8601 format
+      }
+      Relationships: []
+    },
+    chatbot_messages: {
+      Row: {
+        id: string;
+        session_id?: string | null;
+        message: string;
+        is_user: boolean;
+        metadata?: object | null; // JSON object
+        created_at?: string | null; // ISO 8601 format
+      }
+      Insert: {
+        session_id?: string | null;
+        message: string;
+        is_user: boolean;
+        metadata?: object | null; // JSON object
+        created_at?: string | null; // ISO 8601 format
+      }
+      Update: {
+        session_id?: string | null;
+        message?: string;
+        is_user?: boolean;
+        metadata?: object | null; // JSON object
+        created_at?: string | null; // ISO 8601 format
+      }
+      Relationships: []
+    },
+    chatbot_sessions: {
+      Row: {
+        id: string;
+        user_id?: string | null;
+        session_data?: object | null; // JSON object
+        created_at?: string | null; // ISO 8601 format
+        updated_at?: string | null; // ISO 8601 format
+      }
+      Insert: {
+        user_id?: string | null;
+        session_data?: object | null; // JSON object
+        created_at?: string | null; // ISO 8601 format
+        updated_at?: string | null; // ISO 8601 format
+      }
+      Update: {
+        user_id?: string | null;
+        session_data?: object | null; // JSON object
+        created_at?: string | null; // ISO 8601 format
+        updated_at?: string | null; // ISO 8601 format
+      }
+      Relationships: []
+    },
+    chats: {
+      Row: {
+        id: string;
+        buyer_id?: string | null;
+        seller_id?: string | null;
+        product_id?: string | null;
+        last_message?: string | null;
+        last_message_at?: string | null; // ISO 8601 format
+        buyer_unread_count?: number | null;
+        seller_unread_count?: number | null;
+        created_at?: string | null; // ISO 8601 format
+        updated_at?: string | null; // ISO 8601 format
+      }
+      Insert: {
+        buyer_id?: string | null;
+        seller_id?: string | null;
+        product_id?: string | null;
+        last_message?: string | null;
+        last_message_at?: string | null; // ISO 8601 format
+        buyer_unread_count?: number | null;
+        seller_unread_count?: number | null;
+        created_at?: string | null; // ISO 8601 format
+        updated_at?: string | null; // ISO 8601 format
+      }
+      Update: {
+        buyer_id?: string | null;
+        seller_id?: string | null;
+        product_id?: string | null;
+        last_message?: string | null;
+        last_message_at?: string | null; // ISO 8601 format
+        buyer_unread_count?: number | null;
+        seller_unread_count?: number | null;
+        created_at?: string | null; // ISO 8601 format
+        updated_at?: string | null; // ISO 8601 format
+      }
+      Relationships: []
+    },
+    faq_knowledge_base: {
+      Row: {
+        id: string;
+        question: string;
+        answer: string;
+        keywords?: string[] | null;
+        category?: string | null;
+        priority?: number | null;
+        is_active?: boolean | null;
+        created_at?: string | null; // ISO 8601 format
+        updated_at?: string | null; // ISO 8601 format
+      }
+      Insert: {
+        question: string;
+        answer: string;
+        keywords?: string[] | null;
+        category?: string | null;
+        priority?: number | null;
+        is_active?: boolean | null;
+        created_at?: string | null; // ISO 8601 format
+        updated_at?: string | null; // ISO 8601 format
+      }
+      Update: {
+        question?: string;
+        answer?: string;
+        keywords?: string[] | null;
+        category?: string | null;
+        priority?: number | null;
+        is_active?: boolean | null;
+        created_at?: string | null; // ISO 8601 format
+        updated_at?: string | null; // ISO 8601 format
+      }
+      Relationships: []
+    },
+    followed_sellers: {
+      Row: {
+        id: string;
+        follower_id?: string | null;
+        seller_id?: string | null;
+        created_at?: string | null; // ISO 8601 format
+      }
+      Insert: {
+        follower_id?: string | null;
+        seller_id?: string | null;
+        created_at?: string | null; // ISO 8601 format
+      }
+      Update: {
+        follower_id?: string | null;
+        seller_id?: string | null;
+        created_at?: string | null; // ISO 8601 format
+      }
+      Relationships: []
+    },
+    messages: {
+      Row: {
+        id: string;
+        chat_id?: string | null;
+        sender_id?: string | null;
+        content: string;
+        message_type?: 'text' | 'image' | 'system' | null;
+        is_read?: boolean | null;
+        created_at?: string | null; // ISO 8601 format
+      }
+      Insert: {
+        chat_id?: string | null;
+        sender_id?: string | null;
+        content: string;
+        message_type?: 'text' | 'image' | 'system' | null;
+        is_read?: boolean | null;
+        created_at?: string | null; // ISO 8601 format
+      }
+      Update: {
+        chat_id?: string | null;
+        sender_id?: string | null;
+        content?: string;
+        message_type?: 'text' | 'image' | 'system' | null;
+        is_read?: boolean | null;
+        created_at?: string | null; // ISO 8601 format
+      }
+      Relationships: []
+    },
+    orders: {
+      Row: {
+        id: string;
+        buyer_id?: string | null;
+        seller_id?: string | null;
+        product_id?: string | null;
+        quantity: number;
+        unit_price: number; // 12.34 format
+        total_amount: number; // 12.34 format
+        status?: 'pending' | 'confirmed' | 'shipped' | 'delivered' | 'cancelled' | 'refunded' | null;
+        payment_status?: 'pending' | 'paid' | 'failed' | 'refunded' | null;
+        delivery_address: string;
+        delivery_phone?: string | null;
+        notes?: string | null;
+        tracking_number?: string | null;
+        created_at?: string | null; // ISO 8601 format
+        updated_at?: string | null; // ISO 8601 format
+      }
+      Insert: {
+        buyer_id?: string | null;
+        seller_id?: string | null;
+        product_id?: string | null;
+        quantity: number;
+        unit_price: number; // 12.34 format
+        total_amount: number; // 12.34 format
+        status?: 'pending' | 'confirmed' | 'shipped' | 'delivered' | 'cancelled' | 'refunded' | null;
+        payment_status?: 'pending' | 'paid' | 'failed' | 'refunded' | null;
+        delivery_address: string;
+        delivery_phone?: string | null;
+        notes?: string | null;
+        tracking_number?: string | null;
+        created_at?: string | null; // ISO 8601 format
+        updated_at?: string | null; // ISO 8601 format
+      }
+      Update: {
+        buyer_id?: string | null;
+        seller_id?: string | null;
+        product_id?: string | null;
+        quantity?: number;
+        unit_price?: number; // 12.34 format
+        total_amount?: number; // 12.34 format
+        status?: 'pending' | 'confirmed' | 'shipped' | 'delivered' | 'cancelled' | 'refunded' | null;
+        payment_status?: 'pending' | 'paid' | 'failed' | 'refunded' | null;
+        delivery_address?: string;
+        delivery_phone?: string | null;
+        notes?: string | null;
+        tracking_number?: string | null;
+        created_at?: string | null; // ISO 8601 format
+        updated_at?: string | null; // ISO 8601 format
+      }
+      Relationships: []
+    },
+    products: {
+      Row: {
+        id: string;
+        seller_id?: string | null;
+        category_id?: string | null;
+        name: string;
+        description?: string | null;
+        price: number; // 12.34 format
+        images?: string[] | null;
+        stock?: number | null;
+        condition?: 'new' | 'like_new' | 'good' | 'fair' | null;
+        location?: string | null;
+        tags?: string[] | null;
+        is_active?: boolean | null;
+        views_count?: number | null;
+        created_at?: string | null; // ISO 8601 format
+        updated_at?: string | null; // ISO 8601 format
+        status?: 'available' | 'sold' | 'draft' | null;
+      }
+      Insert: {
+        seller_id?: string | null;
+        category_id?: string | null;
+        name: string;
+        description?: string | null;
+        price: number; // 12.34 format
+        images?: string[] | null;
+        stock?: number | null;
+        condition?: 'new' | 'like_new' | 'good' | 'fair' | null;
+        location?: string | null;
+        tags?: string[] | null;
+        is_active?: boolean | null;
+        views_count?: number | null;
+        created_at?: string | null; // ISO 8601 format
+        updated_at?: string | null; // ISO 8601 format
+        status?: 'available' | 'sold' | 'draft' | null;
+      }
+      Update: {
+        seller_id?: string | null;
+        category_id?: string | null;
+        name?: string;
+        description?: string | null;
+        price?: number; // 12.34 format
+        images?: string[] | null;
+        stock?: number | null;
+        condition?: 'new' | 'like_new' | 'good' | 'fair' | null;
+        location?: string | null;
+        tags?: string[] | null;
+        is_active?: boolean | null;
+        views_count?: number | null;
+        created_at?: string | null; // ISO 8601 format
+        updated_at?: string | null; // ISO 8601 format
+        status?: 'available' | 'sold' | 'draft' | null;
+      }
+      Relationships: []
+    },
+    reviews: {
+      Row: {
+        id: string;
+        reviewer_id?: string | null;
+        product_id?: string | null;
+        order_id?: string | null;
+        rating: number; // 1 to 5
+        comment?: string | null;
+        images?: string[] | null;
+        is_verified?: boolean | null;
+        created_at?: string | null; // ISO 8601 format
+        updated_at?: string | null; // ISO 8601 format
+      }
+      Insert: {
+        reviewer_id?: string | null;
+        product_id?: string | null;
+        order_id?: string | null;
+        rating: number; // 1 to 5
+        comment?: string | null;
+        images?: string[] | null;
+        is_verified?: boolean | null;
+        created_at?: string | null; // ISO 8601 format
+        updated_at?: string | null; // ISO 8601 format
+      }
+      Update: {
+        reviewer_id?: string | null;
+        product_id?: string | null;
+        order_id?: string | null;
+        rating?: number; // 1 to 5
+        comment?: string | null;
+        images?: string[] | null;
+        is_verified?: boolean | null;
+        created_at?: string | null; // ISO 8601 format
+        updated_at?: string | null; // ISO 8601 format
+      }
+      Relationships: []
+    },
+    wishlist: {
+      Row: {
+        id: string;
+        user_id?: string | null;
+        product_id?: string | null;
+        created_at?: string | null; // ISO 8601 format
+      }
+      Insert: {
+        user_id?: string | null;
+        product_id?: string | null;
+        created_at?: string | null; // ISO 8601 format
+      }
+      Update: {
+        user_id?: string | null;
+        product_id?: string | null;
+        created_at?: string | null; // ISO 8601 format
+      }
+      Relationships: []
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      increment_product_views: {
-        Args: { product_id: string }
-        Returns: undefined
-      }
+      [_ in never]: never
     }
     Enums: {
       [_ in never]: never

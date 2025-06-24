@@ -1,6 +1,6 @@
 
-import { useState } from 'react';
-import { Search, Menu, X, User, Store, ShoppingBag } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Search, Menu, X, User, Store, ShoppingBag, Eye, Shield } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -11,13 +11,12 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { useAuth } from '@/hooks/useAuth';
 import { Link } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
+import type { Tables } from '@/integrations/supabase/types';
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { user, signOut, loading } = useAuth();
-  
-  // For now, we'll default to 'buyer' role - this could be enhanced to read from user profile
-  const userType = 'buyer'; // This would come from user profile in a real app
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
@@ -37,7 +36,7 @@ const Navbar = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
-              <h1 className="text-2xl font-bold text-blue-600">BekasiUMKM</h1>
+              <h1 className="text-2xl font-bold text-blue-600">JajanBang</h1>
             </div>
             <div className="text-gray-500">Loading...</div>
           </div>
@@ -54,7 +53,7 @@ const Navbar = () => {
           <div className="flex items-center">
             <div className="flex-shrink-0">
               <Link to="/">
-                <h1 className="text-2xl font-bold text-blue-600">BekasiUMKM</h1>
+                <h1 className="text-2xl font-bold text-blue-600">JajanBang</h1>
               </Link>
             </div>
           </div>
@@ -73,9 +72,16 @@ const Navbar = () => {
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-4">
-            <Button variant="ghost" className="text-gray-700 hover:text-blue-600">
-              Jelajahi
-            </Button>
+            <Link to="/browse">
+              <Button variant="ghost" className="text-gray-700 hover:text-blue-600">
+                Jelajahi Produk
+              </Button>
+            </Link>
+            <Link to="/products">
+              <Button variant="ghost" className="text-gray-700 hover:text-blue-600">
+                Produk Saya
+              </Button>
+            </Link>
             <Button variant="ghost" className="text-gray-700 hover:text-blue-600">
               Tentang Kami
             </Button>
@@ -95,9 +101,11 @@ const Navbar = () => {
               </>
             ) : (
               <>
-                <Button className="bg-orange-500 hover:bg-orange-600 text-white">
-                  Jual Barang
-                </Button>
+                <Link to="/products/create">
+                  <Button className="bg-orange-500 hover:bg-orange-600 text-white">
+                    Jual Barang
+                  </Button>
+                </Link>
                 
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
@@ -106,33 +114,30 @@ const Navbar = () => {
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-48">
-                    {userType === 'buyer' ? (
-                      <>
-                        <DropdownMenuItem>
-                          <User className="mr-2 h-4 w-4" />
-                          Akun Saya
-                        </DropdownMenuItem>
-                        <DropdownMenuItem>
-                          <ShoppingBag className="mr-2 h-4 w-4" />
-                          Chat Saya
-                        </DropdownMenuItem>
-                      </>
-                    ) : (
-                      <>
-                        <DropdownMenuItem>
-                          <Store className="mr-2 h-4 w-4" />
-                          Toko Saya
-                        </DropdownMenuItem>
-                        <DropdownMenuItem>
-                          <ShoppingBag className="mr-2 h-4 w-4" />
-                          Produk Saya
-                        </DropdownMenuItem>
-                        <DropdownMenuItem>
-                          <User className="mr-2 h-4 w-4" />
-                          Chat Saya
-                        </DropdownMenuItem>
-                      </>
-                    )}
+                    <Link to="/profile">
+                      <DropdownMenuItem>
+                        <User className="mr-2 h-4 w-4" />
+                        Profil Saya
+                      </DropdownMenuItem>
+                    </Link>
+                    <Link to="/products">
+                      <DropdownMenuItem>
+                        <ShoppingBag className="mr-2 h-4 w-4" />
+                        Produk Saya
+                      </DropdownMenuItem>
+                    </Link>
+                    <Link to="/chat">
+                      <DropdownMenuItem>
+                        <User className="mr-2 h-4 w-4" />
+                        Chat Saya
+                      </DropdownMenuItem>
+                    </Link>
+                    <Link to="/admin">
+                      <DropdownMenuItem>
+                        <Shield className="mr-2 h-4 w-4" />
+                        Admin Panel
+                      </DropdownMenuItem>
+                    </Link>
                     <DropdownMenuItem className="text-red-600" onClick={handleSignOut}>
                       Logout
                     </DropdownMenuItem>
@@ -166,9 +171,18 @@ const Navbar = () => {
         {isMenuOpen && (
           <div className="md:hidden">
             <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3 border-t">
-              <Button variant="ghost" className="w-full justify-start text-gray-700 hover:text-blue-600">
-                Jelajahi
-              </Button>
+              <Link to="/browse" className="block">
+                <Button variant="ghost" className="w-full justify-start text-gray-700 hover:text-blue-600">
+                  <Eye className="mr-2 h-4 w-4" />
+                  Jelajahi Produk
+                </Button>
+              </Link>
+              <Link to="/products" className="block">
+                <Button variant="ghost" className="w-full justify-start text-gray-700 hover:text-blue-600">
+                  <ShoppingBag className="mr-2 h-4 w-4" />
+                  Produk Saya
+                </Button>
+              </Link>
               <Button variant="ghost" className="w-full justify-start text-gray-700 hover:text-blue-600">
                 Tentang Kami
               </Button>
@@ -188,36 +202,23 @@ const Navbar = () => {
                 </div>
               ) : (
                 <div className="space-y-2 pt-4">
-                  <Button className="w-full bg-orange-500 hover:bg-orange-600 text-white">
-                    Jual Barang
-                  </Button>
-                  {userType === 'buyer' ? (
-                    <>
-                      <Button variant="ghost" className="w-full justify-start">
-                        <User className="mr-2 h-4 w-4" />
-                        Akun Saya
-                      </Button>
-                      <Button variant="ghost" className="w-full justify-start">
-                        <ShoppingBag className="mr-2 h-4 w-4" />
-                        Chat Saya
-                      </Button>
-                    </>
-                  ) : (
-                    <>
-                      <Button variant="ghost" className="w-full justify-start">
-                        <Store className="mr-2 h-4 w-4" />
-                        Toko Saya
-                      </Button>
-                      <Button variant="ghost" className="w-full justify-start">
-                        <ShoppingBag className="mr-2 h-4 w-4" />
-                        Produk Saya
-                      </Button>
-                      <Button variant="ghost" className="w-full justify-start">
-                        <User className="mr-2 h-4 w-4" />
-                        Chat Saya
-                      </Button>
-                    </>
-                  )}
+                  <Link to="/products/create" className="block">
+                    <Button className="w-full bg-orange-500 hover:bg-orange-600 text-white">
+                      Jual Barang
+                    </Button>
+                  </Link>
+                  <Link to="/profile" className="block">
+                    <Button variant="ghost" className="w-full justify-start">
+                      <User className="mr-2 h-4 w-4" />
+                      Profil Saya
+                    </Button>
+                  </Link>
+                  <Link to="/chat" className="block">
+                    <Button variant="ghost" className="w-full justify-start">
+                      <User className="mr-2 h-4 w-4" />
+                      Chat Saya
+                    </Button>
+                  </Link>
                   <Button variant="ghost" className="w-full justify-start text-red-600" onClick={handleSignOut}>
                     Logout
                   </Button>
