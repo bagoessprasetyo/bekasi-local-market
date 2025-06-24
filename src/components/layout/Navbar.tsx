@@ -9,15 +9,42 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { useAuth } from '@/hooks/useAuth';
+import { Link } from 'react-router-dom';
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(false); // This will be managed by Supabase auth
-  const [userType, setUserType] = useState<'buyer' | 'seller'>('buyer'); // This will come from user profile
+  const { user, signOut, loading } = useAuth();
+  
+  // For now, we'll default to 'buyer' role - this could be enhanced to read from user profile
+  const userType = 'buyer'; // This would come from user profile in a real app
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
   };
+
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+    } catch (error) {
+      console.error('Error signing out:', error);
+    }
+  };
+
+  if (loading) {
+    return (
+      <nav className="bg-white shadow-lg sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            <div className="flex items-center">
+              <h1 className="text-2xl font-bold text-blue-600">BekasiUMKM</h1>
+            </div>
+            <div className="text-gray-500">Loading...</div>
+          </div>
+        </div>
+      </nav>
+    );
+  }
 
   return (
     <nav className="bg-white shadow-lg sticky top-0 z-50">
@@ -26,7 +53,9 @@ const Navbar = () => {
           {/* Logo */}
           <div className="flex items-center">
             <div className="flex-shrink-0">
-              <h1 className="text-2xl font-bold text-blue-600">BekasiUMKM</h1>
+              <Link to="/">
+                <h1 className="text-2xl font-bold text-blue-600">BekasiUMKM</h1>
+              </Link>
             </div>
           </div>
 
@@ -51,14 +80,18 @@ const Navbar = () => {
               Tentang Kami
             </Button>
 
-            {!isLoggedIn ? (
+            {!user ? (
               <>
-                <Button variant="outline" className="text-blue-600 border-blue-600 hover:bg-blue-50">
-                  Masuk
-                </Button>
-                <Button className="bg-blue-600 hover:bg-blue-700 text-white">
-                  Daftar
-                </Button>
+                <Link to="/login">
+                  <Button variant="outline" className="text-blue-600 border-blue-600 hover:bg-blue-50">
+                    Masuk
+                  </Button>
+                </Link>
+                <Link to="/register">
+                  <Button className="bg-blue-600 hover:bg-blue-700 text-white">
+                    Daftar
+                  </Button>
+                </Link>
               </>
             ) : (
               <>
@@ -100,7 +133,7 @@ const Navbar = () => {
                         </DropdownMenuItem>
                       </>
                     )}
-                    <DropdownMenuItem className="text-red-600">
+                    <DropdownMenuItem className="text-red-600" onClick={handleSignOut}>
                       Logout
                     </DropdownMenuItem>
                   </DropdownMenuContent>
@@ -140,14 +173,18 @@ const Navbar = () => {
                 Tentang Kami
               </Button>
               
-              {!isLoggedIn ? (
+              {!user ? (
                 <div className="space-y-2 pt-4">
-                  <Button variant="outline" className="w-full text-blue-600 border-blue-600">
-                    Masuk
-                  </Button>
-                  <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white">
-                    Daftar
-                  </Button>
+                  <Link to="/login" className="block">
+                    <Button variant="outline" className="w-full text-blue-600 border-blue-600">
+                      Masuk
+                    </Button>
+                  </Link>
+                  <Link to="/register" className="block">
+                    <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white">
+                      Daftar
+                    </Button>
+                  </Link>
                 </div>
               ) : (
                 <div className="space-y-2 pt-4">
@@ -181,7 +218,7 @@ const Navbar = () => {
                       </Button>
                     </>
                   )}
-                  <Button variant="ghost" className="w-full justify-start text-red-600">
+                  <Button variant="ghost" className="w-full justify-start text-red-600" onClick={handleSignOut}>
                     Logout
                   </Button>
                 </div>
