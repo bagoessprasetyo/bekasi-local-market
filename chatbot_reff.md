@@ -10,6 +10,7 @@ import {
   User, 
   Paperclip, 
   Mic, 
+  CornerDownLeft,
   ArrowDown,
   Minimize2,
   Maximize2
@@ -19,8 +20,11 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { useChatbot } from '@/hooks/useChatbot';
-import { useAuth } from '@/hooks/useAuth';
+
+// Utils function
+function cn(...classes: (string | undefined | null | false)[]): string {
+  return classes.filter(Boolean).join(' ');
+}
 
 // Animated Text Hook
 function useAnimatedText(text: string, delimiter: string = "") {
@@ -97,14 +101,6 @@ function MessageLoading() {
       </circle>
     </svg>
   );
-}
-
-interface Message {
-  id: string;
-  content: string;
-  sender: "user" | "assistant";
-  timestamp: Date;
-  isTyping?: boolean;
 }
 
 // Auto Scroll Hook
@@ -239,14 +235,247 @@ function useAutoScroll(options: UseAutoScrollOptions = {}) {
   };
 }
 
-const ChatWidget: React.FC = () => {
+// Chat Input Component
+interface ChatInputProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {}
+
+const ChatInput = React.forwardRef<HTMLTextAreaElement, ChatInputProps>(
+  ({ className, ...props }, ref) => (
+    <Textarea
+      autoComplete="off"
+      ref={ref}
+      name="message"
+      className={cn(
+        "max-h-12 px-4 py-3 bg-background text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 w-full rounded-md flex items-center h-16 resize-none",
+        className,
+      )}
+      {...props}
+    />
+  ),
+);
+ChatInput.displayName = "ChatInput";
+
+// Chat Bubble Components
+interface ChatBubbleProps {
+  variant?: "sent" | "received";
+  layout?: "default" | "ai";
+  className?: string;
+  children: React.ReactNode;
+}
+
+function ChatBubble({
+  variant = "received",
+  layout = "default",
+  className,
+  children,
+}: ChatBubbleProps) {
+  return (
+    <div
+      className={cn(
+        "flex items-start gap-3 mb-4 group",
+        variant === "sent" && "flex-row-reverse",
+        className,
+      )}
+    >
+      {children}
+    </div>
+  );
+}
+
+interface ChatBubbleMessageProps {
+  variant?: "sent" | "received";
+  isLoading?: boolean;
+  className?: string;
+  children?: React.ReactNode;
+}
+
+function ChatBubbleMessage({
+  variant = "received",
+  isLoading,
+  className,
+  children,
+}: ChatBubbleMessageProps) {
+  return (
+    <div
+      className={cn(
+        "rounded-2xl px-4 py-3 max-w-[80%] shadow-sm transition-all duration-200",
+        variant === "sent" 
+          ? "bg-primary text-primary-foreground ml-auto" 
+          : "bg-muted/80 backdrop-blur-sm",
+        "group-hover:shadow-md",
+        className
+      )}
+    >
+      {isLoading ? (
+        <div className="flex items-center space-x-2">
+          <MessageLoading />
+        </div>
+      ) : (
+        children
+      )}
+    </div>
+  );
+}
+
+interface ChatBubbleAvatarProps {
+  src?: string;
+  fallback?: string;
+  className?: string;
+  variant?: "sent" | "received";
+}
+
+function ChatBubbleAvatar({
+  src,
+  fallback = "AI",
+  className,
+  variant = "received",
+}: ChatBubbleAvatarProps) {
+  return (
+    <Avatar className={cn("h-10 w-10 ring-2 ring-background shadow-sm", className)}>
+      {src && <AvatarImage src={src} />}
+      <AvatarFallback className={cn(
+        variant === "sent" ? "bg-primary text-primary-foreground" : "bg-muted"
+      )}>
+        {variant === "sent" ? <User className="h-4 w-4" /> : <Bot className="h-4 w-4" />}
+      </AvatarFallback>
+    </Avatar>
+  );
+}
+
+// Chat Message List Component
+interface ChatMessageListProps extends React.HTMLAttributes<HTMLDivElement> {
+  smooth?: boolean;
+}
+
+const ChatMessageList = React.forwardRef<HTMLDivElement, ChatMessageListProps>(
+  ({ className, children, smooth = false, ...props }, _ref) => {
+    const {
+      scrollRef,
+      isAtBottom,
+      autoScrollEnabled,
+      scrollToBottom,
+      disableAutoScroll,
+    } = useAutoScroll({
+      smooth,
+      content: children,
+    });
+
+    return (
+      <div className="relative w-full h-full">
+        <div
+          className={cn("flex flex-col w-full h-full p-4 overflow-y-auto", className)}
+          ref={scrollRef}
+          onWheel={disableAutoScroll}
+          onTouchMove={disableAutoScroll}
+          {...props}
+        >
+          <div className="flex flex-col gap-4">{children}</div>
+        </div>
+
+        {!isAtBottom && (
+          <Button
+            onClick={() => {
+              scrollToBottom();
+            }}
+            size="icon"
+            variant="outline"
+            className="absolute bottom-4 left-1/2 transform -translate-x-1/2 inline-flex rounded-full shadow-lg bg-background/80 backdrop-blur-sm hover:bg-background"
+            aria-label="Scroll to bottom"
+          >
+            <ArrowDown className="h-4 w-4" />
+          </Button>
+        )}
+      </div>
+    );
+  }
+);
+
+ChatMessageList.displayName = "ChatMessageList";
+
+// Prompt Suggestions Component
+interface PromptSuggestionProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+  children: React.ReactNode;
+  variant?: "default" | "outline" | "ghost";
+}
+
+function PromptSuggestion({
+  children,
+  variant = "outline",
+  className,
+  ...props
+}: PromptSuggestionProps) {
+  return (
+    <Button
+      variant={variant}
+      size="sm"
+      className={cn(
+        "rounded-full text-sm font-normal h-auto py-2 px-4 transition-all duration-200 hover:scale-105",
+        "bg-background/50 backdrop-blur-sm border-border/50 hover:bg-accent/80",
+        className
+      )}
+      {...props}
+    >
+      {children}
+    </Button>
+  );
+}
+
+// Main Chatbot Widget Component
+export type ChatPosition = "bottom-right" | "bottom-left";
+export type ChatSize = "sm" | "md" | "lg" | "xl";
+
+interface Message {
+  id: string;
+  content: string;
+  sender: "user" | "assistant";
+  timestamp: Date;
+  isTyping?: boolean;
+}
+
+interface ChatbotWidgetProps {
+  position?: ChatPosition;
+  size?: ChatSize;
+  title?: string;
+  subtitle?: string;
+  placeholder?: string;
+  suggestions?: string[];
+  onSendMessage?: (message: string) => void;
+  className?: string;
+}
+
+const chatConfig = {
+  dimensions: {
+    sm: "sm:max-w-sm sm:max-h-[500px]",
+    md: "sm:max-w-md sm:max-h-[600px]",
+    lg: "sm:max-w-lg sm:max-h-[700px]",
+    xl: "sm:max-w-xl sm:max-h-[800px]",
+  },
+  positions: {
+    "bottom-right": "bottom-6 right-6",
+    "bottom-left": "bottom-6 left-6",
+  },
+  chatPositions: {
+    "bottom-right": "sm:bottom-[calc(100%+16px)] sm:right-0",
+    "bottom-left": "sm:bottom-[calc(100%+16px)] sm:left-0",
+  },
+};
+
+function ChatbotWidget({
+  position = "bottom-right",
+  size = "md",
+  title = "Marketplace Assistant",
+  subtitle = "How can I help you today?",
+  placeholder = "Ask about products, orders, or anything else...",
+  suggestions = [
+    "Find products near me",
+    "Track my order",
+    "Return policy",
+    "Payment methods"
+  ],
+  onSendMessage,
+  className,
+}: ChatbotWidgetProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
-  const [input, setInput] = useState('');
-  const { user } = useAuth();
-  const { messages: hookMessages, sendMessage, isLoading } = useChatbot();
-  
-  // Convert hook messages to new format
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "1",
@@ -255,6 +484,8 @@ const ChatWidget: React.FC = () => {
       timestamp: new Date(),
     },
   ]);
+  const [input, setInput] = useState("");
+  const [isTyping, setIsTyping] = useState(false);
 
   const toggleChat = () => setIsOpen(!isOpen);
   const toggleMinimize = () => setIsMinimized(!isMinimized);
@@ -272,66 +503,52 @@ const ChatWidget: React.FC = () => {
 
     setMessages(prev => [...prev, userMessage]);
     setInput("");
-    
-    // Call the existing hook
-    await sendMessage(input);
+    setIsTyping(true);
+
+    // Call external handler if provided
+    onSendMessage?.(input);
+
+    // Simulate AI response
+    setTimeout(() => {
+      const responses = [
+        "I'd be happy to help you with that! Let me find the information you need.",
+        "Great question! Here's what I found for you...",
+        "I can definitely assist with that. Let me provide you with the details.",
+        "Thanks for asking! Here's the information you're looking for.",
+      ];
+
+      const assistantMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        content: responses[Math.floor(Math.random() * responses.length)],
+        sender: "assistant",
+        timestamp: new Date(),
+      };
+
+      setMessages(prev => [...prev, assistantMessage]);
+      setIsTyping(false);
+    }, 1500);
   };
 
   const handleSuggestionClick = (suggestion: string) => {
     setInput(suggestion);
-    // Auto-submit the suggestion
-    const syntheticEvent = {
-      preventDefault: () => {},
-      target: { message: { value: suggestion } }
-    } as FormEvent<HTMLFormElement>;
-    handleSubmit(syntheticEvent);
   };
 
-  const suggestions = [
-    "What products do you have?",
-    "How can I place an order?",
-    "What are your store hours?",
-    "Do you offer delivery?"
-  ];
-
-  // Sync with hook messages
-  useEffect(() => {
-    if (hookMessages.length > 0) {
-      const convertedMessages = hookMessages.map(msg => ({
-        id: msg.id,
-        content: msg.text,
-        sender: msg.isUser ? "user" as const : "assistant" as const,
-        timestamp: msg.timestamp,
-      }));
-      setMessages(prev => {
-        // Only add new messages
-        const existingIds = prev.map(m => m.id);
-        const newMessages = convertedMessages.filter(m => !existingIds.includes(m.id));
-        return [...prev, ...newMessages];
-      });
-    }
-  }, [hookMessages]);
-
-  const {
-    scrollRef,
-    isAtBottom,
-    autoScrollEnabled,
-    scrollToBottom,
-    disableAutoScroll,
-  } = useAutoScroll({
-    smooth: true,
-    content: messages,
-  });
+  const unreadCount = messages.filter(m => m.sender === "assistant").length;
 
   return (
-    <div className="fixed bottom-6 right-6 z-50">
+    <div
+      className={cn(
+        `fixed ${chatConfig.positions[position]} z-50`,
+        className
+      )}
+    >
       {/* Chat Window */}
       <div
         className={cn(
           "flex flex-col bg-background/95 backdrop-blur-xl border border-border/50 shadow-2xl overflow-hidden transition-all duration-300 ease-out",
           "sm:rounded-2xl sm:absolute sm:w-[90vw] sm:h-[80vh] fixed inset-0 w-full h-full sm:inset-auto",
-          "sm:bottom-[calc(100%+16px)] sm:right-0",
-          "sm:max-w-md sm:max-h-[600px]",
+          chatConfig.chatPositions[position],
+          chatConfig.dimensions[size],
           isOpen 
             ? "pointer-events-auto opacity-100 visible scale-100 translate-y-0" 
             : "pointer-events-none opacity-0 invisible scale-95 sm:translate-y-4",
@@ -347,8 +564,8 @@ const ChatWidget: React.FC = () => {
               </AvatarFallback>
             </Avatar>
             <div>
-              <h3 className="font-semibold text-foreground">Marketplace Assistant</h3>
-              <p className="text-sm text-muted-foreground">How can I help you today?</p>
+              <h3 className="font-semibold text-foreground">{title}</h3>
+              <p className="text-sm text-muted-foreground">{subtitle}</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -375,78 +592,35 @@ const ChatWidget: React.FC = () => {
           <>
             {/* Messages */}
             <div className="flex-1 overflow-hidden">
-              <div className="relative w-full h-full">
-                <div
-                  className="flex flex-col w-full h-full p-4 overflow-y-auto"
-                  ref={scrollRef}
-                  onWheel={disableAutoScroll}
-                  onTouchMove={disableAutoScroll}
-                >
-                  <div className="flex flex-col gap-4">
-                    {messages.map((message) => (
-                      <div
-                        key={message.id}
-                        className={cn(
-                          "flex items-start gap-3 mb-4 group",
-                          message.sender === "user" && "flex-row-reverse"
-                        )}
-                      >
-                        <Avatar className="h-10 w-10 ring-2 ring-background shadow-sm">
-                          <AvatarFallback className={cn(
-                            message.sender === "user" ? "bg-primary text-primary-foreground" : "bg-muted"
-                          )}>
-                            {message.sender === "user" ? <User className="h-4 w-4" /> : <Bot className="h-4 w-4" />}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div
-                          className={cn(
-                            "rounded-2xl px-4 py-3 max-w-[80%] shadow-sm transition-all duration-200",
-                            message.sender === "user" 
-                              ? "bg-primary text-primary-foreground ml-auto" 
-                              : "bg-muted/80 backdrop-blur-sm",
-                            "group-hover:shadow-md"
-                          )}
-                        >
-                          {message.sender === "assistant" ? (
-                            <span>{useAnimatedText(message.content, " ")}</span>
-                          ) : (
-                            message.content
-                          )}
-                        </div>
-                      </div>
-                    ))}
-
-                    {isLoading && (
-                      <div className="flex items-start gap-3 mb-4 group">
-                        <Avatar className="h-10 w-10 ring-2 ring-background shadow-sm">
-                          <AvatarFallback className="bg-muted">
-                            <Bot className="h-4 w-4" />
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="rounded-2xl px-4 py-3 max-w-[80%] shadow-sm transition-all duration-200 bg-muted/80 backdrop-blur-sm group-hover:shadow-md">
-                          <div className="flex items-center space-x-2">
-                            <MessageLoading />
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {!isAtBottom && (
-                  <Button
-                    onClick={() => {
-                      scrollToBottom();
-                    }}
-                    size="icon"
-                    variant="outline"
-                    className="absolute bottom-4 left-1/2 transform -translate-x-1/2 inline-flex rounded-full shadow-lg bg-background/80 backdrop-blur-sm hover:bg-background"
-                    aria-label="Scroll to bottom"
+              <ChatMessageList smooth>
+                {messages.map((message) => (
+                  <ChatBubble
+                    key={message.id}
+                    variant={message.sender === "user" ? "sent" : "received"}
                   >
-                    <ArrowDown className="h-4 w-4" />
-                  </Button>
+                    <ChatBubbleAvatar
+                      variant={message.sender === "user" ? "sent" : "received"}
+                      fallback={message.sender === "user" ? "U" : "AI"}
+                    />
+                    <ChatBubbleMessage
+                      variant={message.sender === "user" ? "sent" : "received"}
+                    >
+                      {message.sender === "assistant" ? (
+                        <span>{useAnimatedText(message.content, " ")}</span>
+                      ) : (
+                        message.content
+                      )}
+                    </ChatBubbleMessage>
+                  </ChatBubble>
+                ))}
+
+                {isTyping && (
+                  <ChatBubble variant="received">
+                    <ChatBubbleAvatar variant="received" />
+                    <ChatBubbleMessage isLoading />
+                  </ChatBubble>
                 )}
-              </div>
+              </ChatMessageList>
             </div>
 
             {/* Suggestions */}
@@ -454,18 +628,12 @@ const ChatWidget: React.FC = () => {
               <div className="p-4 border-t border-border/50 bg-background/30">
                 <div className="flex flex-wrap gap-2">
                   {suggestions.map((suggestion, index) => (
-                    <Button
+                    <PromptSuggestion
                       key={index}
-                      variant="outline"
-                      size="sm"
-                      className={cn(
-                        "rounded-full text-sm font-normal h-auto py-2 px-4 transition-all duration-200 hover:scale-105",
-                        "bg-background/50 backdrop-blur-sm border-border/50 hover:bg-accent/80"
-                      )}
                       onClick={() => handleSuggestionClick(suggestion)}
                     >
                       {suggestion}
-                    </Button>
+                    </PromptSuggestion>
                   ))}
                 </div>
               </div>
@@ -477,13 +645,11 @@ const ChatWidget: React.FC = () => {
                 onSubmit={handleSubmit}
                 className="relative rounded-xl border border-border/50 bg-background/80 backdrop-blur-sm focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary/50 transition-all duration-200"
               >
-                <Textarea
-                  autoComplete="off"
-                  name="message"
+                <ChatInput
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
-                  placeholder="Ask about products, orders, or anything else..."
-                  className="min-h-12 resize-none rounded-xl bg-transparent border-0 p-4 pr-16 shadow-none focus-visible:ring-0 placeholder:text-muted-foreground/60 max-h-12 px-4 py-3 text-sm focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 w-full flex items-center h-16"
+                  placeholder={placeholder}
+                  className="min-h-12 resize-none rounded-xl bg-transparent border-0 p-4 pr-16 shadow-none focus-visible:ring-0 placeholder:text-muted-foreground/60"
                   onKeyDown={(e) => {
                     if (e.key === "Enter" && !e.shiftKey) {
                       e.preventDefault();
@@ -518,11 +684,6 @@ const ChatWidget: React.FC = () => {
                   </Button>
                 </div>
               </form>
-              {!user && (
-                <p className="text-xs text-muted-foreground mt-2">
-                  <a href="/login" className="text-primary hover:underline">Login</a> for personalized assistance
-                </p>
-              )}
             </div>
           </>
         )}
@@ -542,12 +703,64 @@ const ChatWidget: React.FC = () => {
         ) : (
           <div className="relative">
             <MessageCircle className="h-6 w-6" />
+            {unreadCount > 0 && (
+              <Badge 
+                variant="destructive" 
+                className="absolute -top-2 -right-2 h-5 w-5 p-0 text-xs flex items-center justify-center"
+              >
+                {unreadCount > 9 ? "9+" : unreadCount}
+              </Badge>
+            )}
           </div>
         )}
       </Button>
     </div>
   );
-};
+}
 
-export { ChatWidget };
-export default ChatWidget;
+// Demo Component
+function ChatbotWidgetDemo() {
+  const handleSendMessage = (message: string) => {
+    console.log("Message sent:", message);
+  };
+
+  return (
+    <div className="h-screen bg-gradient-to-br from-background to-muted/20 relative overflow-hidden">
+      <div className="absolute inset-0 bg-grid-pattern opacity-5" />
+      <div className="relative z-10 flex items-center justify-center h-full">
+        <div className="text-center space-y-4 p-8">
+          <h1 className="text-4xl font-bold text-foreground">
+            Local Marketplace
+          </h1>
+          <p className="text-xl text-muted-foreground max-w-2xl">
+            Discover amazing products from local sellers. Our AI assistant is here to help you find exactly what you're looking for.
+          </p>
+          <div className="flex flex-wrap gap-4 justify-center mt-8">
+            <Button variant="outline" size="lg">Browse Products</Button>
+            <Button variant="outline" size="lg">Sell Items</Button>
+            <Button variant="outline" size="lg">Track Orders</Button>
+          </div>
+        </div>
+      </div>
+      
+      <ChatbotWidget
+        position="bottom-right"
+        size="lg"
+        title="Marketplace Assistant"
+        subtitle="Online • Ready to help"
+        placeholder="Ask about products, orders, or anything else..."
+        suggestions={[
+          "Find electronics near me",
+          "Track my recent order",
+          "What's your return policy?",
+          "How do I sell items?",
+          "Payment methods accepted",
+          "Delivery options available"
+        ]}
+        onSendMessage={handleSendMessage}
+      />
+    </div>
+  );
+}
+
+export default ChatbotWidgetDemo;
